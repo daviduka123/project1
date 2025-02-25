@@ -1,4 +1,4 @@
-// Task 1: Working with Arrays of Books
+// Configurable book list
 const books = [
     { title: "The Hobbit", author: "J.R.R. Tolkien", year: 1937, genre: "Fantasy" },
     { title: "1984", author: "George Orwell", year: 1949, genre: "Dystopian" },
@@ -12,12 +12,13 @@ const books = [
     { title: "Moby-Dick", author: "Herman Melville", year: 1851, genre: "Adventure" }
 ];
 
-// Task 2: Expanding the Book System with Classes
+// Library Class
 class Library {
-    constructor() {
+    constructor(initialBooks = []) {
         this.books = [];
         this.booksAfter2000 = [];
         this.genreCounts = {};
+        initialBooks.forEach(book => this.addBook(book));
     }
 
     addBook(book) {
@@ -41,12 +42,7 @@ class Library {
             throw new Error(`Book with title "${title}" not found.`);
         }
         const [removedBook] = this.books.splice(index, 1);
-        
-        const indexAfter2000 = this.booksAfter2000.findIndex(book => book.title === title);
-        if (indexAfter2000 !== -1) {
-            this.booksAfter2000.splice(indexAfter2000, 1);
-        }
-
+        this.booksAfter2000 = this.booksAfter2000.filter(book => book.title !== title);
         this.genreCounts[removedBook.genre]--;
         if (this.genreCounts[removedBook.genre] === 0) {
             delete this.genreCounts[removedBook.genre];
@@ -57,7 +53,7 @@ class Library {
         return this.books.filter(book => book.author.toLowerCase().includes(author.toLowerCase()));
     }
 
-    searchBooks({ year, genre, author, title }) {
+    searchBooks({ year, genre, author, title } = {}) {
         return this.books.filter(book => 
             (year ? book.year === year || (Array.isArray(year) && book.year >= year[0] && book.year <= year[1]) : true) &&
             (genre ? book.genre.toLowerCase().includes(genre.toLowerCase()) : true) &&
@@ -80,14 +76,7 @@ class Library {
             if (!Array.isArray(parsedBooks)) {
                 throw new Error("Invalid JSON format: Expected an array of books.");
             }
-            const library = new Library();
-            parsedBooks.forEach(book => {
-                if (!book.title || !book.author || typeof book.year !== 'number' || !book.genre) {
-                    throw new Error("Invalid book format in JSON.");
-                }
-                library.addBook(book);
-            });
-            return library;
+            return new Library(parsedBooks);
         } catch (error) {
             throw new Error("Error parsing JSON: " + error.message);
         }
@@ -106,26 +95,22 @@ class Library {
     }
 }
 
-// Example Workflow
-const jsonData = `  
-  [  
-    { "title": "1984", "author": "George Orwell", "year": 1949, "genre": "Dystopian" },  
-    { "title": "The Hobbit", "author": "J.R.R. Tolkien", "year": 1937, "genre": "Fantasy" }  
-  ]  
-`;
-
-const library = Library.createFromJSON(jsonData);
+// Example Usage
+const library = new Library(books);
 
 // Add a new book
-library.addBook({  
+testBook = {
   title: "Brave New World",  
   author: "Aldous Huxley",  
   year: 1932,  
   genre: "Dystopian"  
-});
+};
+library.addBook(testBook);
 
-// Get results
-console.log(library.searchBooks({ genre: "Dystopian" }));
+// Change search parameters easily
+const searchParams = { genre: "Dystopian" };
+console.log(library.searchBooks(searchParams));
+
 console.log(library.getBooksByAuthor("J.R.R. Tolkien"));
 console.log(library.getBooksAfter2000());
 console.log(library.getGenreCounts());
